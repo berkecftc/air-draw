@@ -1,0 +1,636 @@
+/* Modern Design System for Neon Air Draw (AI Spatial Canvas) */
+
+:root {
+  --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-neon: 'Orbitron', 'Inter', monospace;
+  
+  /* Transition timings */
+  --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-normal: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-slow: 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Theme 1: Neon Dark (Cyberpunk) */
+body.theme-neon {
+  --bg-primary: #0a0813;
+  --bg-secondary: #120e24;
+  --bg-tertiary: #191433;
+  
+  --text-primary: #f5f3f7;
+  --text-secondary: #a29db8;
+  
+  --accent-primary: #ff007f; /* Hot Pink */
+  --accent-secondary: #00f0ff; /* Electric Cyan */
+  --accent-glow: rgba(255, 0, 127, 0.4);
+  --accent-secondary-glow: rgba(0, 240, 255, 0.3);
+  
+  --border-color: rgba(255, 0, 127, 0.15);
+  --glass-bg: rgba(18, 14, 36, 0.7);
+  --glass-border: rgba(255, 0, 127, 0.2);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+  
+  --glow-shadow: 0 0 15px var(--accent-primary);
+  --canvas-bg: #05040a;
+}
+
+/* Theme 2: Cyberpunk Gold (Amber) */
+body.theme-gold {
+  --bg-primary: #120d06;
+  --bg-secondary: #1e160a;
+  --bg-tertiary: #2a1f0f;
+  
+  --text-primary: #fdfaf2;
+  --text-secondary: #c2b59f;
+  
+  --accent-primary: #ffaa00; /* Gold/Amber */
+  --accent-secondary: #ff5500; /* Neon Orange */
+  --accent-glow: rgba(255, 170, 0, 0.4);
+  --accent-secondary-glow: rgba(255, 85, 0, 0.3);
+  
+  --border-color: rgba(255, 170, 0, 0.15);
+  --glass-bg: rgba(30, 22, 10, 0.75);
+  --glass-border: rgba(255, 170, 0, 0.2);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.6);
+  
+  --glow-shadow: 0 0 15px var(--accent-primary);
+  --canvas-bg: #090603;
+}
+
+/* Theme 3: Deep Ocean (Teal) */
+body.theme-ocean {
+  --bg-primary: #040d1a;
+  --bg-secondary: #081930;
+  --bg-tertiary: #0c2547;
+  
+  --text-primary: #e6f0fa;
+  --text-secondary: #90a4be;
+  
+  --accent-primary: #00f5d4; /* Aqua/Teal */
+  --accent-secondary: #00bbf9; /* Sky Blue */
+  --accent-glow: rgba(0, 245, 212, 0.4);
+  --accent-secondary-glow: rgba(0, 187, 249, 0.3);
+  
+  --border-color: rgba(0, 245, 212, 0.15);
+  --glass-bg: rgba(8, 25, 48, 0.7);
+  --glass-border: rgba(0, 245, 212, 0.2);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+  
+  --glow-shadow: 0 0 15px var(--accent-primary);
+  --canvas-bg: #02070e;
+}
+
+/* CSS Reset & Basics */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  transition: background-color var(--transition-slow), color var(--transition-slow);
+}
+
+/* Global scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--bg-tertiary);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-primary);
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* Interactive Canvas Stage Layout */
+.canvas-stage {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background-color: var(--canvas-bg);
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Video Feed element (always hidden from direct layout, processed in background) */
+.webcam-video {
+  display: none;
+}
+
+/* The three layered canvas layers */
+.canvas-layer {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Mirrored display transforms (applied to drawing, skeleton and background video feeds) */
+.mirrored {
+  transform: scaleX(-1);
+}
+
+/* Glassmorphism Styles */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  box-shadow: var(--glass-shadow);
+  padding: 1.5rem;
+  transition: border-color var(--transition-normal), background-color var(--transition-normal);
+}
+
+/* Glowing Neon Elements */
+.neon-text-glow {
+  text-shadow: 0 0 10px var(--accent-primary), 0 0 20px rgba(255, 255, 255, 0.2);
+}
+
+.neon-border-glow {
+  box-shadow: 0 0 15px var(--accent-glow);
+}
+
+/* Custom UI Components and Overlays */
+.ui-container {
+  position: absolute;
+  z-index: 10;
+  pointer-events: none; /* Let clicks pass through to canvas unless overridden */
+  display: grid;
+}
+
+.ui-container * {
+  pointer-events: auto; /* Enable mouse events on actual UI elements */
+}
+
+/* Header Panel styling */
+.header-hud {
+  position: absolute;
+  top: 1.5rem;
+  left: 1.5rem;
+  right: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  pointer-events: none;
+}
+
+.brand-section {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.brand-title {
+  font-family: var(--font-neon);
+  font-weight: 900;
+  font-size: 1.5rem;
+  letter-spacing: 2px;
+  color: var(--text-primary);
+  background: linear-gradient(135deg, var(--text-primary) 30%, var(--accent-primary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.brand-badge {
+  font-family: var(--font-neon);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  background: var(--accent-primary);
+  color: #000;
+  box-shadow: var(--glow-shadow);
+}
+
+/* Control Panel (Floating sidebar or dock) */
+.control-dock {
+  position: absolute;
+  bottom: 1.5rem;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  max-width: 90vw;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border-right: 1px solid var(--border-color);
+  padding-right: 0.75rem;
+}
+
+.control-group:last-child {
+  border-right: none;
+  padding-right: 0;
+}
+
+.color-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: transform var(--transition-fast), border-color var(--transition-fast);
+}
+
+.color-dot:hover {
+  transform: scale(1.15);
+}
+
+.color-dot.active {
+  border-color: var(--text-primary);
+  transform: scale(1.1);
+  box-shadow: 0 0 10px currentColor;
+}
+
+/* Button style */
+.hud-btn {
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast), transform var(--transition-fast);
+}
+
+.hud-btn:hover {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: #000;
+  transform: translateY(-2px);
+  box-shadow: var(--glow-shadow);
+}
+
+.hud-btn.active {
+  background: var(--accent-primary);
+  border-color: var(--accent-primary);
+  color: #000;
+  box-shadow: var(--glow-shadow);
+}
+
+.hud-btn:active {
+  transform: translateY(0);
+}
+
+.hud-btn-circle {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  padding: 0;
+}
+
+/* Performance HUD Overlay */
+.stats-panel {
+  position: absolute;
+  top: 6rem;
+  right: 1.5rem;
+  width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  font-size: 0.85rem;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.25rem 0;
+}
+
+.stat-label {
+  color: var(--text-secondary);
+}
+
+.stat-value {
+  font-family: var(--font-neon);
+  font-weight: 700;
+  color: var(--accent-secondary);
+}
+
+/* Gesture HUD Overlay */
+.gesture-guide-panel {
+  position: absolute;
+  top: 6rem;
+  left: 1.5rem;
+  width: 240px;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.gesture-item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all var(--transition-normal);
+}
+
+.gesture-item.active {
+  background: var(--accent-glow);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 10px var(--accent-glow);
+}
+
+.gesture-icon {
+  font-size: 1.5rem;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg-tertiary);
+  border-radius: 8px;
+  border: 1px solid var(--border-color);
+}
+
+.gesture-details {
+  display: flex;
+  flex-direction: column;
+}
+
+.gesture-name {
+  font-weight: 600;
+  font-size: 0.85rem;
+}
+
+.gesture-action {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+/* Model Loading Screen overlay */
+.loader-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: var(--bg-primary);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 100;
+  gap: 2rem;
+}
+
+.loader-logo {
+  font-family: var(--font-neon);
+  font-size: 3rem;
+  font-weight: 900;
+  letter-spacing: 4px;
+  animation: breathe 3s infinite ease-in-out;
+}
+
+.loader-spinner-container {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+.loader-spinner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  border: 4px solid transparent;
+  border-top-color: var(--accent-primary);
+  border-bottom-color: var(--accent-secondary);
+  animation: spin 1.5s infinite linear;
+}
+
+.loader-progress {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: var(--font-neon);
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.loader-status {
+  font-family: var(--font-sans);
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+  max-width: 320px;
+  text-align: center;
+  line-height: 1.5;
+}
+
+/* Animations */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes breathe {
+  0%, 100% {
+    text-shadow: 0 0 10px var(--accent-primary), 0 0 20px var(--accent-glow);
+    opacity: 0.8;
+  }
+  50% {
+    text-shadow: 0 0 25px var(--accent-primary), 0 0 40px var(--accent-glow), 0 0 60px var(--accent-primary);
+    opacity: 1;
+  }
+}
+
+.slider-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  min-width: 100px;
+}
+
+.slider-label {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  display: flex;
+  justify-content: space-between;
+}
+
+.hud-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 100%;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bg-tertiary);
+  outline: none;
+  cursor: pointer;
+}
+
+.hud-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent-primary);
+  box-shadow: var(--glow-shadow);
+  transition: transform var(--transition-fast);
+}
+
+.hud-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.3);
+}
+
+/* Modal Dialog */
+.modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 50;
+}
+
+.modal-content {
+  max-width: 500px;
+  width: 90%;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.modal-title {
+  font-family: var(--font-neon);
+  font-size: 1.25rem;
+  color: var(--accent-primary);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+}
+
+.modal-body {
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: var(--text-secondary);
+}
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Tooltips */
+[data-tooltip] {
+  position: relative;
+}
+
+[data-tooltip]::before {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: 125%;
+  left: 50%;
+  transform: translateX(-50%) translateY(4px);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  color: var(--text-primary);
+  padding: 0.4rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--transition-fast), transform var(--transition-fast);
+  z-index: 100;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+}
+
+[data-tooltip]:hover::before {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+/* Rainbow Stroke keyframes and styling (handled in drawing loop using canvas gradient, but nice to have animations) */
+.pulse-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--accent-primary);
+  animation: pulse-glow 1.5s infinite;
+}
+
+@keyframes pulse-glow {
+  0% {
+    box-shadow: 0 0 0 0 rgba(255, 0, 127, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(255, 0, 127, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 0, 127, 0);
+  }
+}
+
+/* Ambient Background Glow Effect behind elements */
+.ambient-glow {
+  position: absolute;
+  width: 400px;
+  height: 400px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--accent-glow) 0%, rgba(0,0,0,0) 70%);
+  top: -100px;
+  right: -100px;
+  filter: blur(60px);
+  z-index: 0;
+  pointer-events: none;
+}
+
+.ambient-glow-left {
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--accent-secondary-glow) 0%, rgba(0,0,0,0) 70%);
+  bottom: -150px;
+  left: -150px;
+  filter: blur(60px);
+  z-index: 0;
+  pointer-events: none;
+}
