@@ -1,10 +1,13 @@
 # 🌌 Neon Air Draw — AI Spatial Canvas
 
+[![Live Demo](https://img.shields.io/badge/demo-online-brightgreen?style=for-the-badge)](https://air-draw-ecru.vercel.app/)
 [![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new)
 ![TypeScript](https://img.shields.io/badge/typescript-%23007ACC.svg?style=for-the-badge&logo=typescript&logoColor=white)
 ![React](https://img.shields.io/badge/react-%2320232d.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
 ![Vite](https://img.shields.io/badge/vite-%23646CFF.svg?style=for-the-badge&logo=vite&logoColor=white)
 ![CSS3](https://img.shields.io/badge/css3-%231572B6.svg?style=for-the-badge&logo=css3&logoColor=white)
+
+🚀 **Canlı Demo (Live Demo):** [air-draw-ecru.vercel.app](https://air-draw-ecru.vercel.app/)
 
 **Neon Air Draw**, yapay zeka tabanlı el takip (hand-tracking) teknolojisini kullanarak tarayıcınız üzerinden havada çizim yapmanızı sağlayan, fütüristik tasarıma sahip gerçek zamanlı bir web uygulamasıdır. 
 
